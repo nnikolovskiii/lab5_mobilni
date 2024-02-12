@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "975706175700",
+    "project_id": "nnikolovskiii",
+    "storage_bucket": "nnikolovskiii.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:975706175700:android:48181908cbda9eefa32341",
+        "android_client_info": {
+          "package_name": "com.example.lab3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5sL4HSFENeDBMUQiAWPHHSNUTTOMDT3E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

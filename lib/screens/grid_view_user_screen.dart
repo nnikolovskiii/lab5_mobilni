@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +7,8 @@ import 'package:lab3/repository/repository.dart';
 import 'package:lab3/screens/grid_view_screen.dart';
 import 'package:lab3/screens/login_screen.dart';
 
+import '../calendar/pages/events_example.dart';
+import '../calendar/utils.dart';
 import '../firebase_options.dart';
 import '../model/exam.dart';
 
@@ -20,8 +24,6 @@ class _YourWidgetUserState extends State<YourWidgetUser> {
   late Future<List<Exam>> examsFuture;
   String id = "";
 
-  _YourWidgetUserState();
-
   @override
   void initState() {
     super.initState();
@@ -36,11 +38,13 @@ class _YourWidgetUserState extends State<YourWidgetUser> {
   @override
   Widget build(BuildContext context) {
     String? username = FirebaseAuth.instance.currentUser?.displayName;
+    bool isLoggedIn = FirebaseAuth.instance.currentUser != null;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Exam List'),
         actions: [
-          if (FirebaseAuth.instance.currentUser != null)
+          if (isLoggedIn)
             TextButton(
               onPressed: () async {
                 await repository.signOut();
@@ -79,79 +83,45 @@ class _YourWidgetUserState extends State<YourWidgetUser> {
           ),
         ],
       ),
-      body: FutureBuilder<List<Exam>>(
-        future: examsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-            List<Exam> exams = snapshot.data!;
-            return GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10.0,
-                mainAxisSpacing: 10.0,
-              ),
-              itemCount: exams.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  child: GridTile(
-                    child: Container(
-                      color: Colors.yellow[100],
-                      padding: EdgeInsets.all(10.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            exams[index].subject,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 5),
-                          RichText(
-                            text: TextSpan(
-                              text: 'Date: ',
-                              style: TextStyle(color: Colors.grey),
-                              children: [
-                                TextSpan(
-                                  text: '${exams[index].dateFrom.toString()}',
-                                  style: TextStyle(fontWeight: FontWeight.normal),
-                                ),
-                              ],
-                            ),
-                          ),
-                          RichText(
-                            text: TextSpan(
-                              text: 'Year: ',
-                              style: TextStyle(color: Colors.grey),
-                              children: [
-                                TextSpan(
-                                  text: '${exams[index].year}',
-                                  style: TextStyle(fontWeight: FontWeight.normal),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          } else {
-            return Center(
-                child: Text(FirebaseAuth.instance.currentUser != null
-                    ? 'No exams available'
-                    : 'No user signed in'));
-          }
-        },
-      ),
+      body: isLoggedIn ? buildExamList() : Container(), // Render exam list only if logged in
     );
   }
 
+  Widget buildExamList() {
+    return FutureBuilder<List<Exam>>(
+      future: examsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else {
+          LinkedHashMap<DateTime, List<Event>> eventsMap =
+          convertExamsToMap(snapshot.data!);
+          return TableEventsExample(kEvents: eventsMap);
+        }
+      },
+    );
+  }
+
+
+  LinkedHashMap<DateTime, List<Event>> convertExamsToMap(List<Exam> exams) {
+    LinkedHashMap<DateTime, List<Event>> resultMap = LinkedHashMap();
+
+    for (var exam in exams) {
+      DateTime examDate = exam.dateFrom;
+      if (resultMap.containsKey(examDate)) {
+        resultMap[examDate]?.add(Event('${exam.subject} | ${exam.dateFrom.hour}:${exam.dateFrom.minute}'));
+      } else {
+        resultMap[examDate] = [Event('${exam.subject} | ${exam.dateFrom.hour}:${exam.dateFrom.minute}')];
+      }
+    }
+
+    return resultMap;
+  }
+
   void printExam(Exam exam) {
-    print('Exam: ${exam.subject}, Date: ${exam.dateFrom}, Year: ${exam.year}');
+    print(
+        'Exam: ${exam.subject}, Date: ${exam.dateFrom}, Year: ${exam.year}');
   }
 }

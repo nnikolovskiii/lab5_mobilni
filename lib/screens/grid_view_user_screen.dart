@@ -11,6 +11,7 @@ import '../calendar/pages/events_example.dart';
 import '../calendar/utils.dart';
 import '../firebase_options.dart';
 import '../model/exam.dart';
+import 'events_screen.dart';
 
 class YourWidgetUser extends StatefulWidget {
   YourWidgetUser();
@@ -72,6 +73,18 @@ class _YourWidgetUserState extends State<YourWidgetUser> {
               ),
             ),
           SizedBox(width: 10),
+          TextButton(
+            onPressed: () async {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MyApp1()),
+              );
+            },
+            child: Text(
+              'Events',
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
           IconButton(
             onPressed: () {
               Navigator.push(
